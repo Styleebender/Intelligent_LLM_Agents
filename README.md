@@ -113,6 +113,9 @@ The system uses an intelligent agent powered by OpenAI's agents framework to:
 - `"Identify key topics and summarize actionable points"` → Execute topic_categorization + summarization
 - No instructions → Execute all tools in logical sequence
 
+## Quick Test Agent:
+[Google Colab: ]([http://example.com](https://colab.research.google.com/drive/17b2YtpsqK6w_3saZWxcBJNRWFrqSXyPZ?usp=sharing))
+
 ## AWS Services Integration
 
 ### AWS Lambda
