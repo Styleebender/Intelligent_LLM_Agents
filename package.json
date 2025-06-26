@@ -1,0 +1,19 @@
+
+{
+  "name": "intelligent-llm-agent",
+  "version": "1.0.0",
+  "description": "Intelligent LLM Agent with Dynamic Tool Selection",
+  "scripts": {
+    "deploy": "serverless deploy",
+    "remove": "serverless remove",
+    "logs": "serverless logs -f",
+    "info": "serverless info"
+  },
+  "devDependencies": {
+    "serverless": "^3.38.0",
+    "serverless-python-requirements": "^6.0.0",
+    "serverless-plugin-aws-alerts": "^1.6.0"
+  },
+  "author": "Rushikesh Vispute",
+  "license": "MIT"
+}

@@ -1,0 +1,6 @@
+# Optimized packages for OpenAI Agents Lambda Layer
+# AWS Lambda already includes boto3, so we exclude it for smaller layer size
+textblob==0.17.1
+openai-agents
+pydantic==2.11.7
+openai>=1.51.0

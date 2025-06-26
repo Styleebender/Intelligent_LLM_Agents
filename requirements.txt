@@ -1,0 +1,7 @@
+openai-agents
+boto3==1.34.34
+pydantic
+textblob==0.17.1
+scikit-learn==1.4.0
+numpy==1.26.4
+python-dotenv==1.0.1

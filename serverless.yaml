@@ -1,0 +1,289 @@
+service: intelligent-llm-agent
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: eu-north-1
+  stage: ${opt:stage, 'dev'}
+  timeout: 300
+  memorySize: 1024
+  
+  environment:
+    DYNAMODB_TABLE: intelligent-llm-agent-state
+    SQS_QUEUE_URL: https://sqs.eu-north-1.amazonaws.com/354767057889/intelligent-llm-agent-feedback-queue
+    STAGE: ${self:provider.stage}
+    REGION: ${self:provider.region}
+    
+  iam:
+    role:
+      statements:
+        # DynamoDB permissions
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}/index/*"
+        
+        # SQS permissions
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+          Resource:
+            - "arn:aws:sqs:${self:provider.region}:354767057889:intelligent-llm-agent-feedback-queue"
+        
+        # CloudWatch Logs permissions
+        - Effect: Allow
+          Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: "*"
+        
+        # Bedrock permissions (if using AWS Bedrock)
+        - Effect: Allow
+          Action:
+            - bedrock:InvokeModel
+            - bedrock:InvokeModelWithResponseStream
+          Resource: "*"
+
+functions:
+  # User Agent Lambda - Handles input validation and guardrails
+  userAgent:
+    handler: user_agent.lambda_handler
+    name: intelligent-llm-agent-userAgent
+    description: "User interaction agent with guardrails for feedback processing"
+    events:
+      - http:
+          path: /feedback
+          method: post
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+    environment:
+      FUNCTION_NAME: userAgent
+    layers:
+      - ${cf:python-dependencies-layer.PythonDependenciesLayerExport}
+
+  # Tool Agent Lambda - Processes feedback using multiple tools
+  toolAgent:
+    handler: tool_agent.lambda_handler
+    name: intelligent-llm-agents-toolAgent
+    description: "Tool agent for dynamic feedback analysis"
+    timeout: 900  # 15 minutes for complex processing
+    memorySize: 2048
+    events:
+      - sqs:
+          arn: "arn:aws:sqs:${self:provider.region}:354767057889:intelligent-llm-agent-feedback-queue"
+          batchSize: 1
+          maximumBatchingWindowInSeconds: 5
+    environment:
+      FUNCTION_NAME: toolAgent
+    layers:
+      - ${cf:python-dependencies-layer.PythonDependenciesLayerExport}
+
+  # Get Results Lambda - Retrieves processing results
+  getResults:
+    handler: get_results.handler
+    name: intelligent-llm-agents-get-results
+    description: "Retrieve feedback processing results"
+    events:
+      - http:
+          path: /results/{feedback_id}
+          method: get
+          cors:
+            origin: '*'
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+            allowCredentials: false
+    environment:
+      FUNCTION_NAME: getResults
+    layers:
+      - ${cf:python-dependencies-layer.PythonDependenciesLayerExport}
+
+resources:
+  Resources:
+    # DynamoDB Table for State Management
+    IntelligentLLMAgentStateTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: feedback_id
+            AttributeType: S
+          - AttributeName: timestamp
+            AttributeType: N
+        KeySchema:
+          - AttributeName: feedback_id
+            KeyType: HASH
+          - AttributeName: timestamp
+            KeyType: RANGE
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        Tags:
+          - Key: Service
+            Value: ${self:service}
+          - Key: Stage
+            Value: ${self:provider.stage}
+
+    # SQS Queue for Async Communication
+    IntelligentLLMAgentFeedbackQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: intelligent-llm-agent-feedback-queue
+        VisibilityTimeoutSeconds: 960  # 16 minutes (longer than Lambda timeout)
+        MessageRetentionPeriod: 1209600  # 14 days
+        RedrivePolicy:
+          deadLetterTargetArn: !GetAtt IntelligentLLMAgentDeadLetterQueue.Arn
+          maxReceiveCount: 3
+        Tags:
+          - Key: Service
+            Value: ${self:service}
+          - Key: Stage
+            Value: ${self:provider.stage}
+
+    # Dead Letter Queue for Failed Messages
+    IntelligentLLMAgentDeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: intelligent-llm-agent-feedback-queue-dlq
+        MessageRetentionPeriod: 1209600  # 14 days
+        Tags:
+          - Key: Service
+            Value: ${self:service}
+          - Key: Stage
+            Value: ${self:provider.stage}
+
+    # CloudWatch Log Groups with retention
+    UserAgentLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/intelligent-llm-agent-userAgent
+        RetentionInDays: 14
+
+    ToolAgentLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/intelligent-llm-agents-toolAgent
+        RetentionInDays: 14
+
+    GetResultsLogGroup:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: /aws/lambda/intelligent-llm-agents-get-results
+        RetentionInDays: 14
+
+  Outputs:
+    # API Gateway URLs
+    FeedbackSubmissionUrl:
+      Description: "API Gateway endpoint URL for feedback submission"
+      Value:
+        Fn::Join:
+          - ""
+          - - "https://"
+            - Ref: RestApi
+            - ".execute-api."
+            - ${self:provider.region}
+            - ".amazonaws.com/"
+            - ${self:provider.stage}
+            - "/feedback"
+      Export:
+        Name: ${self:service}-${self:provider.stage}-feedback-url
+
+    ResultsRetrievalUrl:
+      Description: "API Gateway endpoint URL for results retrieval"
+      Value:
+        Fn::Join:
+          - ""
+          - - "https://"
+            - Ref: RestApi
+            - ".execute-api."
+            - ${self:provider.region}
+            - ".amazonaws.com/"
+            - ${self:provider.stage}
+            - "/results/{feedback_id}"
+      Export:
+        Name: ${self:service}-${self:provider.stage}-results-url
+
+    # Resource ARNs
+    DynamoDBTableArn:
+      Description: "DynamoDB table ARN"
+      Value:
+        Fn::GetAtt: [IntelligentLLMAgentStateTable, Arn]
+      Export:
+        Name: ${self:service}-${self:provider.stage}-dynamodb-arn
+
+    SQSQueueArn:
+      Description: "SQS queue ARN"
+      Value:
+        Fn::GetAtt: [IntelligentLLMAgentFeedbackQueue, Arn]
+      Export:
+        Name: ${self:service}-${self:provider.stage}-sqs-arn
+
+    SQSQueueUrl:
+      Description: "SQS queue URL"
+      Value:
+        Ref: IntelligentLLMAgentFeedbackQueue
+      Export:
+        Name: ${self:service}-${self:provider.stage}-sqs-url
+
+# Custom section for additional configurations
+custom:
+  # Python requirements for dependencies
+  pythonRequirements:
+    dockerizePip: true
+    slim: true
+    strip: false
+    layer: true
+    
+  # Alerts configuration (optional)
+  alerts:
+    stages:
+      - dev
+      - prod
+    dashboards: true
+    alarms:
+      - functionErrors
+      - functionDuration
+      - functionThrottles
+
+plugins:
+  - serverless-python-requirements
+  - serverless-plugin-aws-alerts  # optional for monitoring
+
+package:
+  patterns:
+    - '!node_modules/**'
+    - '!.git/**'
+    - '!.serverless/**'
+    - '!.vscode/**'
+    - '!__pycache__/**'
+    - '!*.pyc'
+    - '!requirements.txt'
+    - '!package.json'
+    - '!package-lock.json'
