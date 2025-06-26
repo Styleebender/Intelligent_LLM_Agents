@@ -1,7 +1,6 @@
 # Intelligent LLM Agent with Dynamic Tool Selection
 
-## Quick Test Agent:
-([Google Colab:](https://colab.research.google.com/drive/17b2YtpsqK6w_3saZWxcBJNRWFrqSXyPZ?usp=sharing))
+## Quick Test Agent: ([Google Colab:](https://colab.research.google.com/drive/17b2YtpsqK6w_3saZWxcBJNRWFrqSXyPZ?usp=sharing))
 
 ## Project Overview
 
