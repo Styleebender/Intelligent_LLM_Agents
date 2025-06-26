@@ -220,27 +220,6 @@ The system implements comprehensive error handling:
 - **PII Redaction**: Removes personal information
 - **Instruction Validation**: Prevents malicious instructions
 
-### AWS Security
-- **IAM Roles**: Least privilege access for Lambda functions
-- **VPC**: Network isolation (if configured)
-- **Encryption**: Data encryption at rest and in transit
-
-## Monitoring and Logging
-
-- **CloudWatch Logs**: Comprehensive logging for all Lambda functions
-- **Error Tracking**: Detailed error logging and tracking
-- **Performance Metrics**: Execution time and success rate monitoring
-- **State Tracking**: Processing status updates in DynamoDB
-
-## Scalability Considerations
-
-1. **Asynchronous Processing**: SQS enables independent scaling
-2. **Lambda Concurrency**: Auto-scaling based on demand
-3. **DynamoDB**: On-demand billing and auto-scaling
-4. **SQS Dead Letter Queue**: Error handling for failed messages
-
-## Limitations and Future Enhancements
-
 ### Current Limitations
 1. **Caching**: Redis caching not implemented (planned enhancement)
 2. **Infrastructure as Code**: Manual deployment (Terraform planned)
@@ -254,7 +233,6 @@ The system implements comprehensive error handling:
 5. **Batch Processing**: Support for bulk feedback analysis
 
 ## Performance Metrics
-
 - **Average Processing Time**: 30-60 seconds per feedback
 - **Concurrent Processing**: Up to 1000 concurrent requests
 - **Tool Execution**: Parallel execution where possible
@@ -267,13 +245,6 @@ The system implements comprehensive error handling:
 3. **SQS**: Low cost for message queuing
 4. **OpenAI API**: Optimized prompt design to minimize token usage
 
-## Support and Troubleshooting
-
-### Common Issues
-1. **Processing Timeout**: Check Lambda timeout settings
-2. **SQS Message Failures**: Verify queue permissions and DLQ configuration
-3. **DynamoDB Throttling**: Monitor capacity and implement backoff strategies
-4. **OpenAI API Limits**: Implement rate limiting and retry logic
 
 ### Debug Tips
 1. Check CloudWatch logs for detailed error information
@@ -284,12 +255,4 @@ The system implements comprehensive error handling:
 ---
 
 ## Quick Start Guide
-
-1. **Setup Environment Variables**
-2. **Deploy Lambda Functions**
-3. **Configure SQS Queue**
-4. **Create DynamoDB Table**
-5. **Setup API Gateway**
-6. **Test with Sample Data**
-
-For detailed setup instructions, see the Setup Guide below.
+#For detailed setup instructions documenrt.
