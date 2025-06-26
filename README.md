@@ -114,7 +114,7 @@ The system uses an intelligent agent powered by OpenAI's agents framework to:
 - No instructions → Execute all tools in logical sequence
 
 ## Quick Test Agent:
-[Google Colab: ]([http://example.com](https://colab.research.google.com/drive/17b2YtpsqK6w_3saZWxcBJNRWFrqSXyPZ?usp=sharing))
+([Google Colab:](https://colab.research.google.com/drive/17b2YtpsqK6w_3saZWxcBJNRWFrqSXyPZ?usp=sharing))
 
 ## AWS Services Integration
 
