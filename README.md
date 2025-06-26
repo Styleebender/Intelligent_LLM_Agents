@@ -1,5 +1,7 @@
 # Intelligent LLM Agent with Dynamic Tool Selection
 
+## Quick Test Agent: ([Google Colab:](https://colab.research.google.com/drive/17b2YtpsqK6w_3saZWxcBJNRWFrqSXyPZ?usp=sharing))
+
 ## Project Overview
 
 This project implements a smart, multi-agent LLM-driven solution capable of dynamically deciding which tools to execute based on specific instructions for customer feedback analysis. The system uses AWS services for scalability and real-time processing with asynchronous communication between agents.
@@ -113,6 +115,9 @@ The system uses an intelligent agent powered by OpenAI's agents framework to:
 - `"Identify key topics and summarize actionable points"` → Execute topic_categorization + summarization
 - No instructions → Execute all tools in logical sequence
 
+## Quick Test Agent:
+([Google Colab:](https://colab.research.google.com/drive/17b2YtpsqK6w_3saZWxcBJNRWFrqSXyPZ?usp=sharing))
+
 ## AWS Services Integration
 
 ### AWS Lambda
@@ -220,76 +225,23 @@ The system implements comprehensive error handling:
 - **PII Redaction**: Removes personal information
 - **Instruction Validation**: Prevents malicious instructions
 
-### AWS Security
-- **IAM Roles**: Least privilege access for Lambda functions
-- **VPC**: Network isolation (if configured)
-- **Encryption**: Data encryption at rest and in transit
-
-## Monitoring and Logging
-
-- **CloudWatch Logs**: Comprehensive logging for all Lambda functions
-- **Error Tracking**: Detailed error logging and tracking
-- **Performance Metrics**: Execution time and success rate monitoring
-- **State Tracking**: Processing status updates in DynamoDB
-
-## Scalability Considerations
-
-1. **Asynchronous Processing**: SQS enables independent scaling
-2. **Lambda Concurrency**: Auto-scaling based on demand
-3. **DynamoDB**: On-demand billing and auto-scaling
-4. **SQS Dead Letter Queue**: Error handling for failed messages
-
-## Limitations and Future Enhancements
-
 ### Current Limitations
 1. **Caching**: Redis caching not implemented (planned enhancement)
 2. **Infrastructure as Code**: Manual deployment (Terraform planned)
-3. **Advanced Analytics**: Limited to predefined analysis tools
 
 ### Future Enhancements
 1. **Redis Caching**: Implement result caching for improved performance
 2. **Terraform Deployment**: Complete IaC implementation
-3. **Additional Tools**: Custom analysis tools based on business needs
-4. **Real-time Processing**: WebSocket support for real-time updates
-5. **Batch Processing**: Support for bulk feedback analysis
-
-## Performance Metrics
-
-- **Average Processing Time**: 30-60 seconds per feedback
-- **Concurrent Processing**: Up to 1000 concurrent requests
-- **Tool Execution**: Parallel execution where possible
-- **Error Rate**: < 1% under normal conditions
 
 ## Cost Optimization
 
 1. **Lambda Pricing**: Pay-per-execution model
 2. **DynamoDB**: On-demand billing
 3. **SQS**: Low cost for message queuing
-4. **OpenAI API**: Optimized prompt design to minimize token usage
+4. **OpenAI API**: Optimized prompt design to minimize token usag
 
-## Support and Troubleshooting
-
-### Common Issues
-1. **Processing Timeout**: Check Lambda timeout settings
-2. **SQS Message Failures**: Verify queue permissions and DLQ configuration
-3. **DynamoDB Throttling**: Monitor capacity and implement backoff strategies
-4. **OpenAI API Limits**: Implement rate limiting and retry logic
-
-### Debug Tips
-1. Check CloudWatch logs for detailed error information
-2. Verify DynamoDB table structure and permissions
-3. Test SQS connectivity and message format
-4. Validate OpenAI API key and usage limits
 
 ---
 
 ## Quick Start Guide
-
-1. **Setup Environment Variables**
-2. **Deploy Lambda Functions**
-3. **Configure SQS Queue**
-4. **Create DynamoDB Table**
-5. **Setup API Gateway**
-6. **Test with Sample Data**
-
-For detailed setup instructions, see the Setup Guide below.
+## Follow Architecture and Design Decisions & Setup Instructions Documentation
